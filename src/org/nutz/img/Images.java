@@ -36,6 +36,7 @@ import javax.imageio.stream.ImageOutputStream;
 
 import org.nutz.lang.Files;
 import org.nutz.lang.Lang;
+import org.nutz.lang.Streams;
 import org.nutz.repo.Base64;
 
 /**
@@ -415,9 +416,9 @@ public class Images {
      * <p>
      * 图片格式支持 png | gif | jpg | bmp | wbmp
      * 
-     * @param srcIm
+     * @param srcPath
      *            源图像文件对象
-     * @param taIm
+     * @param taPath
      *            目标图像文件对象
      * @param startPoint
      *            起始坐标点，其值[x, y]为相对原图片左上角的坐标
@@ -575,6 +576,21 @@ public class Images {
         }
         catch (IOException e) {
             throw Lang.wrapThrow(e);
+        }
+    }
+
+    /**
+     * @see #write(RenderedImage, String, OutputStream)
+     */
+    public static void writeAndClose(RenderedImage im, String imFormat, OutputStream out) {
+        try {
+            ImageIO.write(im, imFormat, out);
+        }
+        catch (IOException e) {
+            throw Lang.wrapThrow(e);
+        }
+        finally {
+            Streams.safeClose(out);
         }
     }
 

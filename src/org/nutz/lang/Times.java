@@ -105,6 +105,8 @@ public abstract class Times {
                                                      + "(\\d{1,}))?)?"
                                                      + "(([+-])(\\d{1,2})(:\\d{1,2})?)?"
                                                      + "$");
+    
+    private static Pattern _P_TIME_LONG = Pattern.compile("^[0-9]+(L)?$");
 
     /**
      * 根据默认时区计算时间字符串的绝对毫秒数
@@ -197,6 +199,10 @@ public abstract class Times {
             catch (ParseException e) {
                 throw Lang.wrapThrow(e);
             }
+        } else if (_P_TIME_LONG.matcher(ds).find()) {
+            if (ds.endsWith("L"))
+                ds.substring(0, ds.length() -1);
+            return Long.parseLong(ds);
         }
         throw Lang.makeThrow("Unexpect date format '%s'", ds);
     }
@@ -481,6 +487,20 @@ public abstract class Times {
                + Strings.alignRight(ss[1], 2, '0')
                + ":"
                + Strings.alignRight(ss[2], 2, '0');
+    }
+    
+    /**
+     * 将一个秒数（天中），转换成一个格式为 HH:mm 的字符串（精确到分钟）
+     * 
+     * @param sec
+     *            秒数
+     * @return 格式为 HH:mm:ss 的字符串
+     */
+    public static String sTmin(int sec) {
+        int[] ss = T(sec);
+        return Strings.alignRight(ss[0], 2, '0')
+               + ":"
+               + Strings.alignRight(ss[1], 2, '0');
     }
 
     /**

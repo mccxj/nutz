@@ -7,6 +7,7 @@ import java.lang.reflect.Array;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 
 import org.nutz.castor.Castors;
@@ -111,7 +112,13 @@ public abstract class NutStatement implements DaoStatement {
     // TODO 是不是太暴力了涅~~~ --> 不是一般的暴力!!
     @SuppressWarnings("unchecked")
     public <T> List<T> getList(Class<T> classOfT) {
-        return (List<T>) getResult();// TODO 考虑先遍历转换一次
+        Object re = getResult();
+        if (re == null)
+            return null;
+        if (re.getClass().isArray()) {
+            return Arrays.asList((T[])re);
+        }
+        return (List<T>) re;// TODO 考虑先遍历转换一次
     }
 
     public <T> T getObject(Class<T> classOfT) {
@@ -217,18 +224,13 @@ public abstract class NutStatement implements DaoStatement {
                     sb.append("\n    |");
                     for (int col = 0; col < mtrx[0].length; col++) {
                         sb.append(' ');
-                        sb.append(Strings.cutLeft(sss[row][col], maxes[col], ' '));
+                        sb.append(sss[row][col].length() > maxes[col] ? Strings.brief(sss[row][col], maxes[col] - 5) : Strings.alignLeft(sss[row][col], maxes[col], ' '));
                         sb.append(" |");
                     }
                 }
 
                 if (maxRow != mtrx.length)
                     sb.append("\n -- Only display first " + maxRow + " lines , don't show the remaining record(count=" + mtrx.length + ")");
-            } else {
-                // 打印一下影响总行数
-                sb.append("\n -- " + mtrx.length + " lines effected -- ");
-                if (!format.isPrintExample())
-                    sb.append(" set printExample=true if you wanna print executed sql");
             }
             if (format.isPrintExample()) {
                 // 输出可执行的 SQL 语句, TODO 格式非常不好看!!如果要复制SQL,很麻烦!!!

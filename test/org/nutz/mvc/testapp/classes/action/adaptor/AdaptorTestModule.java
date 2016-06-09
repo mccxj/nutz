@@ -6,6 +6,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.nutz.ioc.annotation.InjectName;
 import org.nutz.ioc.loader.annotation.IocBean;
 import org.nutz.lang.Lang;
@@ -105,5 +107,12 @@ public class AdaptorTestModule extends BaseWebappTest {
     @At("/sqldate")
     public String test_sql_date(@Param("checkDate")java.sql.Date checkDate){
     	return checkDate.toString();
+    }
+    
+    
+    @At("/param_without_param")
+    @Ok("json:compact")
+    public Object test_param_without_param(String uid, String[] uids, HttpServletRequest req) {
+        return uids;
     }
 }

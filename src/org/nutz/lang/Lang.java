@@ -63,6 +63,8 @@ import org.nutz.lang.util.SimpleContext;
  * @author bonyfish(mc02cxj@gmail.com)
  */
 public abstract class Lang {
+    
+    public static int HASH_BUFF_SIZE = 16*1024;
 
     public static ComboException comboThrow(Throwable... es) {
         ComboException ce = new ComboException();
@@ -818,7 +820,7 @@ public abstract class Lang {
      * 
      * @param c
      *            分隔符
-     * @param coll
+     * @param it
      *            集合
      * @return 拼合后的字符串
      */
@@ -863,12 +865,12 @@ public abstract class Lang {
      *            采用集合中元素的哪个一个字段为键。
      * @return Map 对象
      */
-    public static <T extends Map<Object, Object>> Map<?, ?> collection2map(Class<T> mapClass,
+    public static <T extends Map<Object, Object>> T collection2map(Class<T> mapClass,
                                                                            Collection<?> coll,
                                                                            String keyFieldName) {
         if (null == coll)
             return null;
-        Map<Object, Object> map = createMap(mapClass);
+        T map = createMap(mapClass);
         if (coll.size() > 0) {
             Iterator<?> it = coll.iterator();
             Object obj = it.next();
@@ -881,7 +883,7 @@ public abstract class Lang {
                 map.put(key, obj);
             }
         }
-        return map;
+        return (T)map;
     }
 
     /**
@@ -973,12 +975,12 @@ public abstract class Lang {
      *            采用集合中元素的哪个一个字段为键。
      * @return Map 对象
      */
-    public static <T extends Map<Object, Object>> Map<?, ?> array2map(Class<T> mapClass,
+    public static <T extends Map<Object, Object>> T array2map(Class<T> mapClass,
                                                                       Object array,
                                                                       String keyFieldName) {
         if (null == array)
             return null;
-        Map<Object, Object> map = createMap(mapClass);
+        T map = createMap(mapClass);
         int len = Array.getLength(array);
         if (len > 0) {
             Object obj = Array.get(array, 0);
@@ -992,13 +994,14 @@ public abstract class Lang {
         return map;
     }
 
-    private static <T extends Map<Object, Object>> Map<Object, Object> createMap(Class<T> mapClass) {
-        Map<Object, Object> map;
+    @SuppressWarnings("unchecked")
+    private static <T extends Map<Object, Object>> T createMap(Class<T> mapClass) {
+        T map;
         try {
             map = mapClass.newInstance();
         }
         catch (Exception e) {
-            map = new HashMap<Object, Object>();
+            map = (T) new HashMap<Object, Object>();
         }
         if (!mapClass.isAssignableFrom(map.getClass())) {
             throw Lang.makeThrow("Fail to create map [%s]", mapClass.getName());
@@ -2289,7 +2292,7 @@ public abstract class Lang {
         try {
             MessageDigest md = MessageDigest.getInstance(algorithm);
 
-            byte[] bs = new byte[1024];
+            byte[] bs = new byte[HASH_BUFF_SIZE];
             int len = 0;
             while ((len = ins.read(bs)) != -1) {
                 md.update(bs, 0, len);
@@ -2473,7 +2476,7 @@ public abstract class Lang {
      *            正则表达式 仅包含哪些key(如果有前缀要求,则已经移除了前缀)
      * @param exclude
      *            正则表达式 排除哪些key(如果有前缀要求,则已经移除了前缀)
-     * @param map
+     * @param keyMap
      *            映射map, 原始key--目标key (如果有前缀要求,则已经移除了前缀)
      * @return 经过过滤的map,与原始map不是同一个对象
      */
@@ -2512,8 +2515,8 @@ public abstract class Lang {
     /**
      * 获得访问者的IP地址, 反向代理过的也可以获得
      * 
-     * @param request
-     * @return
+     * @param request 请求的req对象
+     * @return 来源ip
      */
     public static String getIP(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");
@@ -2593,7 +2596,7 @@ public abstract class Lang {
     }
     
     public static StringBuilder execOutput(String cmd, Charset charset) throws IOException {
-        return execOutput(cmd.split(" "), charset);
+        return execOutput(Strings.splitIgnoreBlank(cmd, " "), charset);
     }
     
     public static StringBuilder execOutput(String[] cmd, Charset charset) throws IOException {

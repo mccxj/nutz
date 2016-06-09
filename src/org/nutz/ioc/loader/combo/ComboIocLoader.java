@@ -105,7 +105,7 @@ public class ComboIocLoader implements IocLoader {
         for (IocLoader loader : iocLoaders) {
             for (String beanName : loader.getName()) {
                 if (!beanNames.add(beanName) && log.isWarnEnabled())
-                    log.warnf("Found Duplicate beanName=%s, pls check you config!", beanName);
+                    log.warnf("Found Duplicate beanName=%s, pls check you config! loader=%s", beanName,loader.getClass());
             }
         }
     }
@@ -145,10 +145,22 @@ public class ComboIocLoader implements IocLoader {
         for (IocLoader iocLoader : iocLoaders)
             if (iocLoader.has(name)) {
                 IocObject iocObject = iocLoader.load(loading, name);
-                if (log.isDebugEnabled())
-                    log.debugf("Found IocObject(%s) in IocLoader(%s)",
-                               name,
-                               iocLoader.getClass().getSimpleName() + "@" + iocLoader.hashCode());
+                if (log.isDebugEnabled()) {
+                    // TODO 弄成更好看的格式,方便debug
+                    String printName;
+                    if (iocLoader instanceof AnnotationIocLoader) {
+                        String packages = Arrays.toString(((AnnotationIocLoader)iocLoader).getPackages());
+                        printName = "AnnotationIocLoader(packages="+packages+")";
+                    } else if (JsonLoader.class.equals(iocLoader.getClass())
+                            && ((JsonLoader)iocLoader).getPaths() != null) {
+                        String paths = Arrays.toString(((JsonLoader)iocLoader).getPaths());
+                        printName = "JsonLoader(paths="+paths+")";
+                    } else {
+                        printName = iocLoader.getClass().getSimpleName() + "@" + iocLoader.hashCode();
+                    }
+                    log.debugf("Found IocObject(%s) in %s",
+                               name, printName);
+                }
                 return iocObject;
             }
         throw new ObjectLoadException("Object '" + name + "' without define!");
@@ -169,7 +181,7 @@ public class ComboIocLoader implements IocLoader {
     /**
      * 类别名
      */
-    private static Map<String, Class<? extends IocLoader>> loaders = new HashMap<String, Class<? extends IocLoader>>();
+    protected static Map<String, Class<? extends IocLoader>> loaders = new HashMap<String, Class<? extends IocLoader>>();
 
     // TODO 这个方法好好整理一下 ...
     public String toString() {

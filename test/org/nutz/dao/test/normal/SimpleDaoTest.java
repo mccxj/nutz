@@ -13,9 +13,12 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.sql.DataSource;
 
 import org.junit.Test;
 import org.nutz.Nutz;
@@ -683,5 +686,47 @@ public class SimpleDaoTest extends DaoCase {
     public void test_daos_queryCount() {
     	String str = "select * from t_pet";
     	Daos.queryCount(dao, str);
+    }
+
+
+    @Test
+    public void test_cnd_andEX_orEX() {
+        String emtryStr = "";
+        Object[] ids = new Object[0];
+        List<String> names = new ArrayList<String>();
+
+        Cnd cnd = Cnd.NEW();
+
+        cnd.andEX("name", "=", emtryStr); // 空字符串,所以该条件不生效
+        cnd.andEX("name", "=", "wendal");
+        cnd.orEX("id", "in", ids);
+        cnd.orEX("id", ">", 1);
+        cnd.andEX("names", "in", names);
+
+        assertEquals("WHERE name='wendal' OR id>1", cnd.toString().trim());
+    }
+    
+    @Test
+    public void test_insert_chain_with_null() {
+        dao.create(Pet.class, true);
+        dao.insert("t_pet", Chain.make("name", "wendal").add("alias", null));
+    }
+    
+    @Test
+    public void test_cnd_emtry_in() {
+        assertEquals(" WHERE  1 != 1 ", Cnd.where("name", "in", Collections.EMPTY_LIST).toString());
+        assertEquals(" WHERE  1 != 1 ", Cnd.where("name", "in", new String[0]).toString());
+        assertEquals(" WHERE  1 != 1 ", Cnd.where("id", "in", new int[]{}).toString());
+    }
+    
+    @Test
+    public void new_nutdao_inside_trans() {
+        // 这纯粹是重现bug的代码,不要学
+        final DataSource ds = ioc.get(DataSource.class);
+        Trans.exec(new Atom() {
+            public void run() {
+                new NutDao(ds);
+            }
+        });
     }
 }
